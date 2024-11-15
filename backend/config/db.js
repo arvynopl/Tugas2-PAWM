@@ -2,16 +2,22 @@
 
 const { Pool } = require('pg');
 
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'tugaspawm',
-    password: 'qwertyuiop1234567890',
-    port: 5432,
-    ssl: false  // Explicitly disable SSL
-});
+const pool = new Pool(
+    process.env.NODE_ENV === 'production'
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      }
+    : {
+        user: 'postgres',
+        host: 'localhost',
+        database: 'tugaspawm',
+        password: 'qwertyuiop1234567890',
+        port: 5432,
+        ssl: false
+      }
+);
 
-// Add error handling
 pool.on('connect', () => {
     console.log('Database connected successfully');
 });
@@ -21,7 +27,6 @@ pool.on('error', (err) => {
     process.exit(-1);
 });
 
-// Test connection
 pool.query('SELECT NOW()', (err, res) => {
     if (err) {
         console.error('Database connection error:', err);
