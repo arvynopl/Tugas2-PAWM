@@ -1,0 +1,173 @@
+<!-- File frontend/page-register.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TPLaB</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+    <div class="sign-in">
+        <!-- Register Box -->
+        <div class="sign-in-box">
+            <!-- Header -->
+            <div class="auth-header">
+                <div class="logo-container">
+                    <a href="index.html">
+                        <img src="images/logo.png" width="100" alt="TPLaB Logo" class="auth-logo">
+                    </a>
+                </div>
+                <h1>Register TPLaB Account</h1>
+            </div>
+
+            <!-- Registration Form -->
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="nim">NIM:</label>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="nim" 
+                            class="form-control" 
+                            required 
+                            autocomplete="off"
+                            placeholder="Example: 18222007"
+                        >
+                    </div>
+                    <small class="form-text">8-digit NIM ITB Anda</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="full_name">Full Name:</label>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="full_name" 
+                            class="form-control" 
+                            required
+                            placeholder="Nama lengkap Anda"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">ITB Email:</label>
+                    <div class="input-group">
+                        <input 
+                            type="email" 
+                            id="email" 
+                            class="form-control" 
+                            required
+                            placeholder="example@itb.ac.id"
+                            pattern=".+@itb\.ac\.id$"
+                        >
+                    </div>
+                    <small class="form-text">Gunakan email ITB Anda (@itb.ac.id)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <div class="input-group">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="form-control" 
+                            required
+                            minlength="8"
+                            placeholder="Minimal terdiri atas 8 karakter"
+                        >
+                    </div>
+                    <small class="form-text">Password minimal 8 karakter</small>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="auth-button">
+                    Register
+                </button>
+
+                <!-- Form Footer -->
+                <div class="form-footer">
+                    <p>
+                        Already have an account? 
+                        <a href="page-sign-in.html">Login here</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Message Display for Feedback -->
+        <div id="messageDisplay" class="message" role="alert"></div>
+
+        <!-- Footer -->
+        <footer class="auth-footer">
+            <p>
+                <a href="index.html">2024 Virtual Lab. All Rights Reserved.</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Auth Loading Overlay -->
+    <div id="authLoading" class="auth-loading" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('registerForm');
+            
+            // Email validation
+            const emailInput = document.getElementById('email');
+            emailInput.addEventListener('input', () => {
+                if (!emailInput.value.endsWith('@itb.ac.id')) {
+                    emailInput.setCustomValidity('Please use your ITB email address');
+                } else {
+                    emailInput.setCustomValidity('');
+                }
+            });
+
+            // NIM validation
+            const nimInput = document.getElementById('nim');
+            nimInput.addEventListener('input', () => {
+                const value = nimInput.value.trim();
+                if (!/^\d{8}$/.test(value)) {
+                    nimInput.setCustomValidity('NIM must be 8 digits');
+                } else {
+                    nimInput.setCustomValidity('');
+                }
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Show loading overlay
+                document.getElementById('authLoading').style.display = 'flex';
+                
+                try {
+                    await authModule.handleRegister(e);
+                } catch (error) {
+                    // Show error message
+                    const messageDisplay = document.getElementById('messageDisplay');
+                    messageDisplay.textContent = error.message || 'An error occurred';
+                    messageDisplay.className = 'message error show';
+                    
+                    setTimeout(() => {
+                        messageDisplay.classList.remove('show');
+                    }, 5000);
+                } finally {
+                    // Hide loading overlay
+                    document.getElementById('authLoading').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

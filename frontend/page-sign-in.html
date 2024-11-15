@@ -1,0 +1,122 @@
+<!-- File frontend/page-sign-in.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - TPLaB</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+    <div class="sign-in">
+        <!-- Sign In Box -->
+        <div class="sign-in-box">
+            <!-- Header -->
+            <div class="auth-header">
+                <div class="logo-container">
+                    <a href="index.html">
+                        <img src="images/logo.png" width="100" alt="TPLaB Logo" class="auth-logo">
+                    </a>
+                </div>
+                <h1>Selamat datang di TPLaB!</h1>
+                <p>Mohon lengkapi informasi akun sebelum melanjutkan</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="nim">NIM:</label>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="nim" 
+                            class="form-control" 
+                            required 
+                            autocomplete="off"
+                            placeholder="Masukkan NIM Anda"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <div class="input-group">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="form-control" 
+                            required
+                            placeholder="Masukkan password Anda"
+                        >
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="auth-button">
+                    Masuk Sekarang
+                </button>
+
+                <!-- Form Footer -->
+                <div class="form-footer">
+                    <p>
+                        Belum punya akun? 
+                        <a href="page-register.html">Daftar disini</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Message Display for Feedback -->
+        <div id="messageDisplay" class="message" role="alert"></div>
+
+        <!-- Footer -->
+        <footer class="auth-footer">
+            <p>
+                <a href="index.html">2024 Virtual Lab. All Rights Reserved.</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Auth Loading Overlay -->
+    <div id="authLoading" class="auth-loading" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('loginForm');
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Show loading overlay
+                document.getElementById('authLoading').style.display = 'flex';
+                
+                try {
+                    await authModule.handleLogin(e);
+                } catch (error) {
+                    // Show error message
+                    const messageDisplay = document.getElementById('messageDisplay');
+                    messageDisplay.textContent = error.message || 'An error occurred';
+                    messageDisplay.className = 'message error show';
+                    
+                    setTimeout(() => {
+                        messageDisplay.classList.remove('show');
+                    }, 5000);
+                } finally {
+                    // Hide loading overlay
+                    document.getElementById('authLoading').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

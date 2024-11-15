@@ -1,0 +1,163 @@
+<!-- File frontend/page-home.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - TPLaB</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header/Navigation -->
+    <header>
+        <div class="container">
+            <a href="page-home.html" class="logo">
+                <img src="images/logo.png" width="100" alt="TPLaB Logo">
+            </a>
+    
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="page-home.html">Home</a></li>
+                    <li><a href="page-virtual-lab.html">Virtual Lab</a></li>
+                    <li><button class="logout-button" onclick="authModule.logout()">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Welcome Section -->
+        <section class="welcome-section">
+            <div class="container">
+                <div class="lab-filter">
+                    <h2>Selamat datang, <span id="user-name"></span>! Selamat belajar di lab virtual oleh TPLaB!</h2>
+                    
+                    <div class="search-container">
+                        <input type="text" class="search-bar" placeholder="Cari lab..." id="searchInput" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Labs Grid Section -->
+        <section class="labs-section">
+            <div class="container">
+                <div class="lab-grid">
+                    <!-- Persamaan Kuadrat -->
+                    <div class="lab-card" data-title="Persamaan Kuadrat" onclick="redirectToLab(this)">
+                        <div class="lab-card-image">
+                            <img src="images/graf.jpg" alt="Persamaan Kuadrat" class="lab-image">
+                            <span class="status-badge status-available">Available</span>
+                        </div>
+                        <div class="lab-info">
+                            <h3>Persamaan Kuadrat</h3>
+                            <p class="lab-description">
+                                Pelajari konsep persamaan kuadrat dengan visualisasi interaktif
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Garis Bilangan -->
+                    <div class="lab-card" data-title="Garis Bilangan" onclick="showAlert(this)">
+                        <div class="lab-card-image">
+                            <img src="images/cover.jpg" alt="Garis Bilangan" class="lab-image">
+                            <span class="status-badge status-coming-soon">Coming Soon</span>
+                        </div>
+                        <div class="lab-info">
+                            <h3>Garis Bilangan</h3>
+                            <p class="lab-description">
+                                Pelajari konsep garis bilangan dengan visualisasi interaktif
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Penjumlahan Vektor -->
+                    <div class="lab-card" data-title="Penjumlahan Vektor" onclick="showAlert(this)">
+                        <div class="lab-card-image">
+                            <img src="images/cover.jpg" alt="Penjumlahan Vektor" class="lab-image">
+                            <span class="status-badge status-coming-soon">Coming Soon</span>
+                        </div>
+                        <div class="lab-info">
+                            <h3>Penjumlahan Vektor</h3>
+                            <p class="lab-description">
+                                Pelajari konsep penjumlahan vektor dalam ruang dengan visualisasi interaktif
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pecahan Campuran -->
+                    <div class="lab-card" data-title="Pecahan Campuran" onclick="showAlert(this)">
+                        <div class="lab-card-image">
+                            <img src="images/cover.jpg" alt="Pecahan Campuran" class="lab-image">
+                            <span class="status-badge status-coming-soon">Coming Soon</span>
+                        </div>
+                        <div class="lab-info">
+                            <h3>Pecahan Campuran</h3>
+                            <p class="lab-description">
+                                Pelajari konsep pecahan campuran dan operasi matematikanya dengan visualisasi interaktif
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Persamaan Garis Lurus -->
+                    <div class="lab-card" data-title="Persamaan Garis Lurus" onclick="showAlert(this)">
+                        <div class="lab-card-image">
+                            <img src="images/cover.jpg" alt="Persamaan Garis Lurus" class="lab-image">
+                            <span class="status-badge status-coming-soon">Coming Soon</span>
+                        </div>
+                        <div class="lab-info">
+                            <h3>Persamaan Garis Lurus</h3>
+                            <p class="lab-description">
+                                Pelajari konsep persamaan garis lurus dan gradien dengan visualisasi interaktif
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Bangun Datar -->
+                    <div class="lab-card" data-title="Bangun Datar" onclick="showAlert(this)">
+                        <div class="lab-card-image">
+                            <img src="images/cover.jpg" alt="Bangun Datar" class="lab-image">
+                            <span class="status-badge status-coming-soon">Coming Soon</span>
+                        </div>
+                        <div class="lab-info">
+                            <h3>Bangun Datar</h3>
+                            <p class="lab-description">
+                                Pelajari konsep geometri bangun datar dengan visualisasi interaktif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="container">
+            <p><a href="index.html">2024 Virtual Lab. All Rights Reserved.</a></p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+        // Authentication check
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof authModule !== 'undefined') {
+                authModule.checkAuth();
+            } else {
+                console.error('Auth module not loaded properly');
+                window.location.href = 'page-sign-in.html';
+            }
+        });
+    </script>
+</body>
+</html>

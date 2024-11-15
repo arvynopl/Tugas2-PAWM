@@ -1,0 +1,151 @@
+<!-- File: page-virtual-lab.html -->
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Virtual Persamaan Kuadrat - TPLaB</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/virtual-lab-style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <a href="page-home.html" class="logo">
+                <img src="images/logo.png" alt="TPLaB Logo" width="100">
+            </a>
+            <nav class="main-nav">
+                <ul class="nav-links">
+                    <li><a href="page-home.html">Home</a></li>
+                    <li><a href="page-virtual-lab.html">Virtual Lab</a></li>
+                    <li><button class="logout-button" onclick="authModule.logout()">Logout</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="lab-content">
+        <div class="container">
+            <h1 class="lab-title">Lab Virtual Persamaan Kuadrat</h1>
+            
+            <!-- Lab Interface -->
+            <div class="lab-interface">
+                <!-- Graph Section -->
+                <section class="graph-section">
+                    <div class="equation-display">
+                        <span id="quadratic-equation">y = 1x² + 0x + 0</span>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="graphCanvas"></canvas>
+                        <div class="canvas-controls">
+                            <button class="control-btn" id="resetView">
+                                <i class="icon-reset"></i> Reset View
+                            </button>
+                            <div class="zoom-controls">
+                                <button class="control-btn" id="zoomIn">
+                                    <i class="icon-zoom-in"></i>
+                                </button>
+                                <button class="control-btn" id="zoomOut">
+                                    <i class="icon-zoom-out"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Controls Section -->
+                <section class="controls-section">
+                    <div class="coefficient-controls">
+                        <div class="control-group">
+                            <label for="coefficientA">Koefisien a:</label>
+                            <div class="slider-container">
+                                <input type="range" id="coefficientA" class="coefficient-slider" 
+                                       min="-5" max="5" step="0.1" value="1">
+                                <input type="number" class="coefficient-input" 
+                                       id="coefficientAValue" value="1">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="coefficientB">Koefisien b:</label>
+                            <div class="slider-container">
+                                <input type="range" id="coefficientB" class="coefficient-slider" 
+                                       min="-5" max="5" step="0.1" value="0">
+                                <input type="number" class="coefficient-input" 
+                                       id="coefficientBValue" value="0">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="coefficientC">Koefisien c:</label>
+                            <div class="slider-container">
+                                <input type="range" id="coefficientC" class="coefficient-slider" 
+                                       min="-5" max="5" step="0.1" value="0">
+                                <input type="number" class="coefficient-input" 
+                                       id="coefficientCValue" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="saveProgress" class="save-button">Simpan Progress</button>
+                </section>
+            </div>
+
+            <!-- Quiz Section -->
+            <section class="quiz-section">
+                <div class="quiz-header">
+                    <h2>Kuis Pemahaman</h2>
+                    <p class="quiz-description">
+                        Jawab pertanyaan berikut untuk menguji pemahaman Anda tentang persamaan kuadrat.
+                    </p>
+                </div>
+                
+                <div id="quiz-container" class="quiz-section">
+                    <!-- Quiz content will be dynamically inserted here -->
+                </div>
+
+                <div id="quiz-result" class="quiz-result" style="display: none;">
+                    <!-- Quiz results will be shown here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <p class="copyright">© 2024 Virtual Lab. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Message Display -->
+    <div id="messageDisplay" class="message" role="alert"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- First load dependencies -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/quiz-data.js"></script>
+
+    <!-- Then load the quiz module -->
+    <script src="js/quiz.js"></script>
+
+    <!-- Finally load modules that depend on quiz module -->
+    <script src="js/graph.js"></script>
+    <script src="js/script.js"></script>
+
+</body>
+</html>
