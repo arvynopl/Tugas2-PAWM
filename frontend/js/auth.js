@@ -1,69 +1,18 @@
-// Create a self-executing anonymous function to avoid global scope pollution
-(function() {
-    // Define the auth module
+// File frontend/js/auth.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Make authModule globally available
     window.authModule = {
-        checkAuth: function() {
-            const publicPages = ['index.html', 'page-sign-in.html', 'page-register.html'];
-            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-            
-            if (publicPages.includes(currentPage)) {
-                return;
-            }
-
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'page-sign-in.html';
-                return;
-            }
-
-            if (this.isTokenExpired(token)) {
-                this.logout();
-                return;
-            }
-
-            // Add token to all API requests
-            this.setupAPIInterceptor();
-        },
-
-        isTokenExpired: function(token) {
-            try {
-                const tokenData = JSON.parse(atob(token.split('.')[1]));
-                return tokenData.exp * 1000 < Date.now();
-            } catch {
-                return true;
-            }
-        },
-
-        logout: function() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('nim');
-            window.location.href = 'page-sign-in.html';
-        },
-
-        setupAPIInterceptor: function() {
-            // Add Authorization header to all fetch requests
-            const originalFetch = window.fetch;
-            window.fetch = function(...args) {
-                let [resource, config] = args;
-                
-                // Only add auth header for our API requests
-                if (resource.includes('/api/')) {
-                    const token = localStorage.getItem('token');
-                    config = config || {};
-                    config.headers = config.headers || {};
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
-                
-                return originalFetch(resource, config);
-            };
-        },
-
+        // Existing login handler
         handleLogin: async function(event) {
             event.preventDefault();
             
             try {
                 const nim = document.getElementById('nim').value;
                 const password = document.getElementById('password').value;
+                
+                // Show loading
+                document.getElementById('authLoading').style.display = 'flex';
 
                 const response = await fetch('http://localhost:5000/api/auth/login', {
                     method: 'POST',
@@ -85,75 +34,130 @@
                 window.location.href = 'page-home.html';
             } catch (error) {
                 this.showMessage(error.message || 'Login failed. Please try again.', 'error');
+            } finally {
+                // Hide loading
+                document.getElementById('authLoading').style.display = 'none';
             }
         },
 
+        // Add registration handler
         handleRegister: async function(event) {
             event.preventDefault();
             
             try {
-                const userData = {
-                    nim: document.getElementById('nim').value,
-                    full_name: document.getElementById('full_name').value,
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
-                };
-
+                // Reset previous error states
+                this.resetFormErrors();
+                
+                // Get form inputs
+                const nim = document.getElementById('nim').value;
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+        
+                // Basic validation
+                if (!nim || !fullName || !email || !password) {
+                    throw new Error('Mohon lengkapi semua field');
+                }
+        
+                // Validate NIM format (8 digits)
+                if (!/^\d{8}$/.test(nim)) {
+                    throw new Error('NIM harus 8 digit angka');
+                }
+        
+                // Validate ITB email
+                if (!email.endsWith('@itb.ac.id')) {
+                    throw new Error('Mohon gunakan email ITB Anda (@itb.ac.id)');
+                }
+        
+                // Show loading
+                document.getElementById('authLoading').style.display = 'flex';
+        
                 const response = await fetch('http://localhost:5000/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(userData)
+                    body: JSON.stringify({
+                        nim,
+                        full_name: fullName,
+                        email,
+                        password
+                    })
                 });
-
+        
                 const data = await response.json();
-
+        
                 if (!response.ok) {
-                    throw new Error(data.error || 'Registration failed');
+                    // Handle specific error cases
+                    if (data.field) {
+                        this.showFieldError(data.field, data.error);
+                        throw new Error(data.error);
+                    }
+                    throw new Error(data.error || 'Pendaftaran gagal');
                 }
-
-                this.showMessage('Registration successful! Please login.', 'success');
+        
+                // Show success message
+                this.showMessage('Pendaftaran berhasil! Anda akan dialihkan ke halaman login...', 'success');
+                
+                // Redirect to login page after 2 seconds
                 setTimeout(() => {
                     window.location.href = 'page-sign-in.html';
                 }, 2000);
+                
             } catch (error) {
-                this.showMessage(error.message || 'Registration failed. Please try again.', 'error');
+                this.showMessage(error.message || 'Pendaftaran gagal. Silakan coba lagi.', 'error');
+            } finally {
+                // Hide loading
+                document.getElementById('authLoading').style.display = 'none';
             }
         },
 
-        showMessage: function(message, type = 'info') {
-            const messageDisplay = document.getElementById('messageDisplay');
-            if (messageDisplay) {
-                messageDisplay.textContent = message;
-                messageDisplay.className = `message ${type} show`;
-                setTimeout(() => {
-                    messageDisplay.classList.remove('show');
-                }, 5000);
-            }
+    // Add these helper functions to improve error visualization
+    resetFormErrors: function() {
+        // Remove any existing error classes and messages
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.classList.remove('error');
+        });
+        document.querySelectorAll('.error-message').forEach(msg => {
+            msg.remove();
+        });
+    },
+
+    showFieldError: function(fieldName, message) {
+        const input = document.getElementById(fieldName);
+        if (input) {
+            input.classList.add('error');
+            
+            // Create error message element
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            // Insert error message after the input field
+            input.parentNode.insertBefore(errorDiv, input.nextSibling);
         }
+    },
+
+    showMessage: function(message, type = 'info') {
+        const messageDisplay = document.getElementById('messageDisplay');
+        if (messageDisplay) {
+            messageDisplay.textContent = message;
+            messageDisplay.className = `message ${type} show`;
+            setTimeout(() => {
+                messageDisplay.classList.remove('show');
+            }, 5000);
+        }
+    }
     };
 
-    // Initialize event listeners
-    document.addEventListener('DOMContentLoaded', () => {
-        // Check which form exists on the current page
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => authModule.handleLogin.call(authModule, e));
-        }
-        
-        if (registerForm) {
-            registerForm.addEventListener('submit', (e) => authModule.handleRegister.call(authModule, e));
-        }
+    // Set up form event listeners
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => window.authModule.handleLogin.call(window.authModule, e));
+    }
 
-        // Run checkAuth if we're not on a login/register page
-        const publicPages = ['page-sign-in.html', 'page-register.html'];
-        const currentPage = window.location.pathname.split('/').pop();
-        
-        if (!publicPages.includes(currentPage)) {
-            authModule.checkAuth();
-        }
-    });
-})();
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', (e) => window.authModule.handleRegister.call(window.authModule, e));
+    }
+});

@@ -25,7 +25,7 @@
                 <ul class="nav-links">
                     <li><a href="page-home.html">Home</a></li>
                     <li><a href="page-virtual-lab.html">Virtual Lab</a></li>
-                    <li><button class="logout-button" onclick="authModule.logout()">Logout</button></li>
+                    <li><button class="logout-button">Logout</button></li>
                 </ul>
             </nav>
         </div>
@@ -46,59 +46,80 @@
                     <div class="canvas-container">
                         <canvas id="graphCanvas"></canvas>
                         <div class="canvas-controls">
-                            <button class="control-btn" id="resetView">
-                                <i class="icon-reset"></i> Reset View
+                            <button class="control-button" id="resetView">
+                                <i class="icon-reset"></i> Atur Ulang
                             </button>
-                            <div class="zoom-controls">
-                                <button class="control-btn" id="zoomIn">
-                                    <i class="icon-zoom-in"></i>
-                                </button>
-                                <button class="control-btn" id="zoomOut">
-                                    <i class="icon-zoom-out"></i>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </section>
-
+                
                 <!-- Controls Section -->
-                <section class="controls-section">
+                <div class="controls-section">
                     <div class="coefficient-controls">
                         <div class="control-group">
                             <label for="coefficientA">Koefisien a:</label>
                             <div class="slider-container">
-                                <input type="range" id="coefficientA" class="coefficient-slider" 
-                                       min="-5" max="5" step="0.1" value="1">
-                                <input type="number" class="coefficient-input" 
-                                       id="coefficientAValue" value="1">
+                                <input type="range" 
+                                       id="coefficientA" 
+                                       min="-5" 
+                                       max="5" 
+                                       step="0.1" 
+                                       value="1" 
+                                       class="coefficient-slider">
+                                <input type="number" 
+                                       id="coefficientAValue" 
+                                       value="1" 
+                                       step="0.1" 
+                                       min="-5" 
+                                       max="5" 
+                                       class="coefficient-input">
                             </div>
                         </div>
-
+                
                         <div class="control-group">
                             <label for="coefficientB">Koefisien b:</label>
                             <div class="slider-container">
-                                <input type="range" id="coefficientB" class="coefficient-slider" 
-                                       min="-5" max="5" step="0.1" value="0">
-                                <input type="number" class="coefficient-input" 
-                                       id="coefficientBValue" value="0">
+                                <input type="range" 
+                                       id="coefficientB" 
+                                       min="-5" 
+                                       max="5" 
+                                       step="0.1" 
+                                       value="0" 
+                                       class="coefficient-slider">
+                                <input type="number" 
+                                       id="coefficientBValue" 
+                                       value="0" 
+                                       step="0.1" 
+                                       min="-5" 
+                                       max="5" 
+                                       class="coefficient-input">
                             </div>
                         </div>
-
+                
                         <div class="control-group">
                             <label for="coefficientC">Koefisien c:</label>
                             <div class="slider-container">
-                                <input type="range" id="coefficientC" class="coefficient-slider" 
-                                       min="-5" max="5" step="0.1" value="0">
-                                <input type="number" class="coefficient-input" 
-                                       id="coefficientCValue" value="0">
+                                <input type="range" 
+                                       id="coefficientC" 
+                                       min="-5" 
+                                       max="5" 
+                                       step="0.1" 
+                                       value="0" 
+                                       class="coefficient-slider">
+                                <input type="number" 
+                                       id="coefficientCValue" 
+                                       value="0" 
+                                       step="0.1" 
+                                       min="-5" 
+                                       max="5" 
+                                       class="coefficient-input">
                             </div>
                         </div>
                     </div>
-
-                    <button id="saveProgress" class="save-button">Simpan Progress</button>
-                </section>
+                    <button id="saveProgress" class="save-button">Simpan Kemajuan</button>
+                </div>
             </div>
-
+            
             <!-- Quiz Section -->
             <section class="quiz-section">
                 <div class="quiz-header">
@@ -108,7 +129,7 @@
                     </p>
                 </div>
                 
-                <div id="quiz-container" class="quiz-section">
+                <div id="quiz-container" class="quiz-container">
                     <!-- Quiz content will be dynamically inserted here -->
                 </div>
 
@@ -120,10 +141,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="main-footer">
-        <div class="container">
-            <p class="copyright">© 2024 Virtual Lab. All Rights Reserved.</p>
-        </div>
+    <footer>
+        <a href="index.html">&copy; 2024 Virtual Lab. All Rights Reserved.</a>
     </footer>
 
     <!-- Message Display -->
@@ -135,17 +154,16 @@
     </div>
 
     <!-- Scripts -->
-    <!-- First load dependencies -->
+    <!-- First load core dependencies -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/quiz-data.js"></script>
-
-    <!-- Then load the quiz module -->
-    <script src="js/quiz.js"></script>
-
-    <!-- Finally load modules that depend on quiz module -->
+    <!-- Then load feature modules -->
     <script src="js/graph.js"></script>
+    <script src="js/quiz.js"></script>
+    <script src="js/quiz-data.js"></script>
+    <!-- Finally load the main script -->
     <script src="js/script.js"></script>
+    <script src="js/logout.js"></script>
 
 </body>
 </html>

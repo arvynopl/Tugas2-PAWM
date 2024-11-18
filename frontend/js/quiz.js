@@ -1,182 +1,171 @@
-// File: frontend/js/quiz.js
+// File frontend/js/quiz.js
 
-// Define quizModule globally
-window.quizModule = {
-  state: {
-      isQuizInProgress: false,
-      quizResults: null,
-      currentAnswers: null
-  },
+const quizModule = {
+    async loadQuiz(labId) {
+        try {
+            const response = await fetch(`http://localhost:5000/api/quiz/${labId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch quiz');
+            }
 
-  getQuizData() {
-      return {
-          answers: this.state.currentAnswers,
-          score: this.state.quizResults?.score || null,
-          passed: this.state.quizResults?.passed || false
-      };
-  },
+            const questions = await response.json();
+            this.renderQuiz(questions);
+        } catch (error) {
+            console.error('Error loading quiz:', error);
+        }
+    },
 
-  async loadQuiz(labId) {
-      try {
-          console.log('Loading quiz for lab:', labId);
-          const response = await fetch(`http://localhost:5000/api/quiz/quadratic`);
-          
-          if (!response.ok) {
-              throw new Error('Failed to load quiz');
-          }
-          
-          const questions = await response.json();
-          this.renderQuiz(questions);
-      } catch (error) {
-          console.error('Error loading quiz:', error);
-          this.showError('Gagal memuat kuis. Silakan coba lagi.');
-      }
-  },
+    renderQuiz(questions) {
+        const container = document.getElementById('quiz-container');
+        if (!container) return;
 
-  renderQuiz(questions) {
-      const quizContainer = document.getElementById('quiz-container');
-      if (!quizContainer) {
-          console.error('Quiz container not found');
-          return;
-      }
+        const html = `
+            <form id="quiz-form">
+                ${this.renderMultipleChoice(questions.multiple_choice)}
+                ${this.renderShortAnswer(questions.short_answer)}
+                <button type="submit" class="submit-quiz">Kirim Jawaban</button>
+            </form>
+        `;
 
-      const html = this.generateQuizHTML(questions);
-      quizContainer.innerHTML = html;
-      this.attachQuizListeners();
-  },
+        container.innerHTML = html;
+        
+        // Add submit handler
+        document.getElementById('quiz-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleSubmit();
+        });
+    },
 
-  generateQuizHTML(questions) {
-      return `
-          <div class="quiz-section">
-              <h3>Kuis Pemahaman</h3>
-              <form id="quiz-form">
-                  ${this.generateMultipleChoiceHTML(questions.multiple_choice)}
-                  ${this.generateShortAnswerHTML(questions.short_answer)}
-                  <div class="quiz-controls">
-                      <button type="submit" class="submit-quiz">Submit Jawaban</button>
-                  </div>
-              </form>
-          </div>
-      `;
-  },
+    renderMultipleChoice(questions) {
+        if (!questions?.length) return '';
+        
+        return `
+            <div class="multiple-choice-section">
+                <h4>Pilihan Ganda</h4>
+                ${questions.map((q, idx) => `
+                    <div class="question-container">
+                        <p class="question">${idx + 1}. ${q.question}</p>
+                        <div class="options">
+                            ${q.options.map((option, optIdx) => `
+                                <div class="option">
+                                    <input type="radio" 
+                                           id="mc-${q.id}-${optIdx}" 
+                                           name="mc-${q.id}" 
+                                           value="${optIdx + 1}">
+                                    <label for="mc-${q.id}-${optIdx}">${option}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
 
-  generateMultipleChoiceHTML(questions) {
-      return `
-          <div class="multiple-choice-section">
-              <h4>Pilihan Ganda</h4>
-              ${questions.map((q, index) => `
-                  <div class="question-container">
-                      <p class="question">${index + 1}. ${q.question}</p>
-                      <div class="options">
-                          ${q.options.map((option, optIndex) => `
-                              <div class="option">
-                                  <input type="radio" 
-                                         name="mc-${index}" 
-                                         id="mc-${index}-${optIndex}"
-                                         value="${optIndex}">
-                                  <label for="mc-${index}-${optIndex}">${option}</label>
-                              </div>
-                          `).join('')}
-                      </div>
-                  </div>
-              `).join('')}
-          </div>
-      `;
-  },
+    renderShortAnswer(questions) {
+        if (!questions?.length) return '';
+        
+        return `
+            <div class="short-answer-section">
+                <h4>Isian Singkat</h4>
+                ${questions.map((q, idx) => `
+                    <div class="question-container">
+                        <p class="question">${idx + 1}. ${q.question}</p>
+                        <input type="text" 
+                               class="short-answer-input"
+                               name="sa-${q.id}"
+                               placeholder="Jawaban Anda">
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
 
-  generateShortAnswerHTML(questions) {
-      return `
-          <div class="short-answer-section">
-              <h4>Isian Singkat</h4>
-              ${questions.map((q, index) => `
-                  <div class="question-container">
-                      <p class="question">${index + 1}. ${q.question}</p>
-                      <input type="text" 
-                             name="sa-${index}" 
-                             class="short-answer-input" 
-                             placeholder="Ketik jawaban Anda">
-                  </div>
-              `).join('')}
-          </div>
-      `;
-  },
+    handleSubmit: async function() {
+        try {
+            // Collect answers
+            const answers = {
+                multiple_choice: [],
+                short_answer: []
+            };
+    
+            // Get multiple choice answers
+            const mcQuestions = document.querySelectorAll('.multiple-choice-section .question-container');
+            mcQuestions.forEach((q, idx) => {
+                const selected = q.querySelector('input[type="radio"]:checked');
+                answers.multiple_choice[idx] = selected ? parseInt(selected.value) : null;
+            });
 
-  attachQuizListeners() {
-      const form = document.getElementById('quiz-form');
-      if (form) {
-          form.addEventListener('submit', (e) => this.handleSubmit(e));
-      }
-  },
+            // Get short answer responses
+            const saQuestions = document.querySelectorAll('.short-answer-section .question-container');
+            saQuestions.forEach((q, idx) => {
+                const input = q.querySelector('.short-answer-input');
+                answers.short_answer[idx] = input ? input.value.trim() : '';
+            });
+    
+            const response = await fetch('http://localhost:5000/api/quiz/quadratic/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ answers })
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to submit quiz');
+            }
+    
+            const result = await response.json();
+            
+            // Display result
+            const resultContainer = document.getElementById('quiz-result');
+            if (resultContainer) {
+                resultContainer.innerHTML = `
+                    <div class="result-message ${result.passed ? 'success' : 'error'}">
+                        <h4>Laporan Hasil</h4>
+                        <p>Skor: ${result.score}/17</p>
+                        <p>Percobaan ke-${result.attempts}</p>
+                        ${result.passed ? 
+                            '<p class="success">Selamat, Anda telah lulus kuis ini!</p>' : 
+                            '<p class="error">Mohon maaf, Anda belum lulus kuis ini.</p>'}
+                    </div>
+                `;
+                resultContainer.style.display = 'block';
+            }
+    
+            if (result.passed) {
+                await window.labModule.saveProgress({ 
+                    quiz_data: { 
+                        answers,
+                        score: result.score,
+                        passed: result.passed
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Quiz submission error:', error);
+            window.labModule.showMessage('Failed to submit quiz', 'error');
+        }
+    },
 
-  async handleSubmit(event) {
-      event.preventDefault();
-      const answers = this.collectAnswers();
-      this.state.currentAnswers = answers;
-      
-      try {
-          const result = await window.quizDataModule.submitQuizAnswers('quadratic', answers);
-          this.state.quizResults = result;
-          this.showQuizResult(result);
-      } catch (error) {
-          console.error('Error submitting quiz:', error);
-          this.showError('Gagal mengirim jawaban. Silakan coba lagi.');
-      }
-  },
+    showResults(result) {
+        const resultContainer = document.getElementById('quiz-result');
+        if (!resultContainer) return;
 
-  collectAnswers() {
-      const form = document.getElementById('quiz-form');
-      const multipleChoiceAnswers = [];
-      const shortAnswers = [];
-
-      // Collect multiple choice answers
-      const mcInputs = form.querySelectorAll('[name^="mc-"]');
-      mcInputs.forEach(input => {
-          if (input.checked) {
-              const index = input.name.split('-')[1];
-              multipleChoiceAnswers[index] = parseInt(input.value);
-          }
-      });
-
-      // Collect short answers
-      const saInputs = form.querySelectorAll('[name^="sa-"]');
-      saInputs.forEach(input => {
-          const index = input.name.split('-')[1];
-          shortAnswers[index] = input.value.trim();
-      });
-
-      return {
-          multiple_choice: multipleChoiceAnswers,
-          short_answer: shortAnswers
-      };
-  },
-
-  showQuizResult(result) {
-      const quizContainer = document.getElementById('quiz-container');
-      const html = `
-          <div class="quiz-result">
-              <h3>Hasil Kuis</h3>
-              <p class="score">Nilai: ${result.score}/17</p>
-              <p class="status">${result.passed ? 
-                  'Selamat! Anda telah lulus kuis ini.' : 
-                  'Maaf, Anda belum lulus kuis ini.'}</p>
-              <p class="attempts">Jumlah percobaan: ${result.attempts}</p>
-              ${!result.passed ? `
-                  <button onclick="quizModule.loadQuiz('quadratic')" class="retry-quiz">
-                      Coba Lagi
-                  </button>
-              ` : ''}
-          </div>
-      `;
-      quizContainer.innerHTML = html;
-  },
-
-  showError(message) {
-      const quizContainer = document.getElementById('quiz-container');
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'quiz-error';
-      errorDiv.textContent = message;
-      
-      quizContainer.insertBefore(errorDiv, quizContainer.firstChild);
-      setTimeout(() => errorDiv.remove(), 5000);
-  }
+        resultContainer.innerHTML = `
+            <div class="quiz-result ${result.passed ? 'success' : 'error'}">
+                <h4>${result.message}</h4>
+                ${result.passed ? '' : '<button class="retry-quiz" onclick="location.reload()">Try Again</button>'}
+            </div>
+        `;
+        resultContainer.style.display = 'block';
+    }
 };
+
+window.quizModule = quizModule;

@@ -110,9 +110,9 @@ a:hover {
 /* Container */
 .container {
     width: 100%;
-    max-width: var(--max-width);
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 var(--spacing-md);
+    padding: 0 var(--spacing-lg);
     justify-content: space-around;
 }
 
@@ -229,7 +229,7 @@ nav {
 /* Navigation CTA Button */
 .nav-links a.cta-button {
     background-color: var(--color-secondary);
-    padding: var(--spacing-xs) var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius-sm);
     font-weight: 600;
     transition: var(--transition-fast);
@@ -287,17 +287,23 @@ nav {
 
 /* Footer */
 footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
     background-color: var(--color-primary);
     color: var(--color-white);
     padding: var(--spacing-md) 0;
-    margin-top: auto;
     text-align: center;
+    margin-top: auto;
 }
 
 footer a {
     color: var(--color-white);
     opacity: 0.9;
     transition: var(--transition);
+    text-decoration: none;
 }
 
 footer a:hover {
@@ -459,7 +465,7 @@ footer a:hover {
 
 .lab-filter {
     background-color: var(--color-white);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     margin-bottom: var(--spacing-sm);
@@ -467,13 +473,20 @@ footer a:hover {
 
 .lab-filter h2 {
     color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.lab-filter p {
+    color: var(--color-black);
+    font-size: var(--font-size-xl);
     margin-bottom: var(--spacing-lg);
 }
 
 /* Search Container */
 .search-container {
-    max-width: 600px;
+    max-width: 100%; /* Change from 600px to 100% */
     margin: 0 auto;
+    padding: 0 var(--spacing-md); /* Add padding on the sides */
 }
 
 .search-bar {
@@ -501,7 +514,8 @@ footer a:hover {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--spacing-lg);
-    padding: var(--spacing-lg) 0;
+    padding: var(--spacing-md) 0;
+    margin-top: var(--spacing-sm);
 }
 
 .lab-card {
@@ -593,15 +607,24 @@ footer a:hover {
 ------------------------ */
 .auth-page {
     background: linear-gradient(135deg, var(--color-background) 0%, #ffffff 100%);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
 }
 
 .sign-in {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     padding: var(--spacing-lg);
+    background: linear-gradient(135deg, var(--color-background) 0%, #ffffff 100%);
+    position: relative;
+    width: 100%;
 }
 
 .sign-in-box {
@@ -610,13 +633,22 @@ footer a:hover {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-lg);
     width: 100%;
-    max-width: 480px;
+    max-width: 600px;
     animation: fadeIn 0.5s ease-out;
+    margin: auto;
+}
+
+.sign-in h1 {
+    margin-bottom: var(--spacing-sm);
+}
+
+.sign-in p {
+    font-size: var(--font-size-lg);
 }
 
 .auth-header {
     text-align: center;
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
 }
 
 .auth-logo {
@@ -655,6 +687,60 @@ footer a:hover {
     box-shadow: 0 0 0 4px rgba(47, 110, 177, 0.1);
 }
 
+/* Form error states */
+.form-control.error {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+.error-message {
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.error-message::before {
+    content: "⚠️";
+    font-size: 14px;
+}
+
+/* Message display enhancement */
+.message {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-sm);
+    color: var(--color-white);
+    transform: translateX(120%);
+    transition: transform 0.3s ease-out;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    max-width: 80%;
+}
+
+.message.show {
+    transform: translateX(0);
+}
+
+.message.error::before {
+    content: "❌";
+}
+
+.message.success::before {
+    content: "✅";
+}
+
+.message.info::before {
+    content: "ℹ️";
+}
+
 .form-text {
     font-size: var(--font-size-sm);
     color: var(--color-gray);
@@ -688,6 +774,36 @@ footer a:hover {
     margin-top: var(--spacing-lg);
     font-size: var(--font-size-sm);
     color: var(--color-gray);
+}
+
+/* Message display styling */
+.message {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 4px;
+    color: white;
+    transform: translateX(120%);
+    transition: transform 0.3s ease-out;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.message.show {
+    transform: translateX(0);
+}
+
+.message.success {
+    background-color: var(--color-success);
+}
+
+.message.error {
+    background-color: var(--color-error);
+}
+
+.message.info {
+    background-color: var(--color-primary);
 }
 
 /* Auth Loading */
@@ -973,6 +1089,19 @@ canvas:hover {
     }
 }
 
+@media (max-height: 800px) {
+    .sign-in {
+        padding-top: calc(var(--spacing-lg) * 2);
+        padding-bottom: calc(var(--spacing-lg) * 2);
+        justify-content: flex-start;
+    }
+    
+    .footer {
+        position: relative;
+        margin-top: var(--spacing-xl);
+    }
+}
+
 @media (max-width: 768px) {
     .control-group {
         padding: var(--spacing-sm);
@@ -1008,6 +1137,10 @@ canvas:hover {
         right: var(--spacing-md);
         left: var(--spacing-md);
         text-align: center;
+    }
+
+    .sign-in-box {
+        padding: var(--spacing-lg);
     }
 }
 

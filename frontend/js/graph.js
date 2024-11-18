@@ -1,6 +1,6 @@
-// File: js/graph.js
+// File frontend/js/graph.js
 
-const graphModule = {
+window.graphModule = {
     canvas: null,
     ctx: null,
     scale: 1,
@@ -9,17 +9,55 @@ const graphModule = {
     isDragging: false,
     lastX: 0,
     lastY: 0,
-    
+    coefficients: {
+        a: 1,
+        b: 0,
+        c: 0
+    },
+     
     init() {
+        console.log('Initializing graph module...');
         this.canvas = document.getElementById('graphCanvas');
+        
+        if (!this.canvas) {
+            console.error('Canvas element not found! Creating canvas...');
+            // Create canvas if it doesn't exist
+            this.canvas = document.createElement('canvas');
+            this.canvas.id = 'graphCanvas';
+            const container = document.querySelector('.canvas-container');
+            if (container) {
+                container.appendChild(this.canvas);
+            } else {
+                console.error('Canvas container not found!');
+                return;
+            }
+        }
+        
         this.ctx = this.canvas.getContext('2d');
         this.setupCanvas();
         this.setupEventListeners();
         this.draw();
+        console.log('Graph module initialized successfully');
+    },
+
+    getState() {
+        try {
+            return {
+                scale: this.scale || 1,
+                offsetX: this.offsetX || 0,
+                offsetY: this.offsetY || 0
+            };
+        } catch (error) {
+            console.error('Error getting graph state:', error);
+            return {
+                scale: 1,
+                offsetX: 0,
+                offsetY: 0
+            };
+        }
     },
 
     setupCanvas() {
-        // Make canvas responsive
         const resize = () => {
             const container = this.canvas.parentElement;
             this.canvas.width = container.clientWidth;
@@ -32,6 +70,8 @@ const graphModule = {
     },
 
     setupEventListeners() {
+        if (!this.canvas) return;
+
         // Pan functionality
         this.canvas.addEventListener('mousedown', (e) => {
             this.isDragging = true;
@@ -40,18 +80,18 @@ const graphModule = {
         });
 
         this.canvas.addEventListener('mousemove', (e) => {
-            if (this.isDragging) {
-                const deltaX = (e.offsetX - this.lastX) / this.scale;
-                const deltaY = (e.offsetY - this.lastY) / this.scale;
-                
-                this.offsetX += deltaX;
-                this.offsetY += deltaY;
-                
-                this.lastX = e.offsetX;
-                this.lastY = e.offsetY;
-                
-                this.draw();
-            }
+            if (!this.isDragging) return;
+            
+            const deltaX = (e.offsetX - this.lastX) / this.scale;
+            const deltaY = (e.offsetY - this.lastY) / this.scale;
+            
+            this.offsetX += deltaX;
+            this.offsetY += deltaY;
+            
+            this.lastX = e.offsetX;
+            this.lastY = e.offsetY;
+            
+            this.draw();
         });
 
         this.canvas.addEventListener('mouseup', () => {
@@ -68,7 +108,6 @@ const graphModule = {
             const delta = e.deltaY * -0.001;
             const newScale = Math.min(Math.max(0.5, this.scale + delta), 4);
             
-            // Zoom around mouse position
             const mouseX = e.offsetX;
             const mouseY = e.offsetY;
             
@@ -79,40 +118,53 @@ const graphModule = {
             this.draw();
         });
 
-        // Control buttons
-        document.getElementById('resetView').addEventListener('click', () => {
-            this.resetView();
+        // Add event listeners for coefficient inputs
+        ['a', 'b', 'c'].forEach(coeff => {
+            const slider = document.getElementById(`coefficient${coeff.toUpperCase()}`);
+            const input = document.getElementById(`coefficient${coeff.toUpperCase()}Value`);
+            
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    console.log(`Slider ${coeff} changed:`, e.target.value);
+                    this.coefficients[coeff] = parseFloat(e.target.value);
+                    if (input) input.value = e.target.value;
+                    this.updateEquation();
+                    this.draw();
+                });
+            }
+            
+            if (input) {
+                input.addEventListener('change', (e) => {
+                    console.log(`Input ${coeff} changed:`, e.target.value);
+                    const value = Math.min(Math.max(parseFloat(e.target.value) || 0, -5), 5);
+                    this.coefficients[coeff] = value;
+                    if (slider) slider.value = value;
+                    this.updateEquation();
+                    this.draw();
+                });
+            }
         });
 
-        document.getElementById('zoomIn').addEventListener('click', () => {
-            this.zoom(1.2);
-        });
-
-        document.getElementById('zoomOut').addEventListener('click', () => {
-            this.zoom(0.8);
-        });
+        const resetViewButton = document.getElementById('resetView');
+        if (resetViewButton) {
+            resetViewButton.addEventListener('click', () => {
+                this.resetView();
+            });
+        } else {
+            console.error('Reset view button not found');
+        }
     },
 
-    resetView() {
-        this.scale = 1;
-        this.offsetX = 0;
-        this.offsetY = 0;
-        this.draw();
-    },
-
-    zoom(factor) {
-        const newScale = Math.min(Math.max(0.5, this.scale * factor), 4);
-        const centerX = this.canvas.width / 2;
-        const centerY = this.canvas.height / 2;
-        
-        this.offsetX -= (centerX / this.scale - centerX / newScale);
-        this.offsetY -= (centerY / this.scale - centerY / newScale);
-        this.scale = newScale;
-        
-        this.draw();
+    updateEquation() {
+        const equation = document.getElementById('quadratic-equation');
+        if (equation) {
+            equation.textContent = `y = ${this.coefficients.a}x² + ${this.coefficients.b}x + ${this.coefficients.c}`;
+        }
     },
 
     drawGrid() {
+        if (!this.ctx) return;
+
         const { width, height } = this.canvas;
         const gridSize = 50 * this.scale;
         
@@ -120,13 +172,13 @@ const graphModule = {
         this.ctx.strokeStyle = '#e0e0e0';
         this.ctx.lineWidth = 1;
 
-        // Vertical lines
+        // Draw vertical lines
         for (let x = 0; x < width; x += gridSize) {
             this.ctx.moveTo(x, 0);
             this.ctx.lineTo(x, height);
         }
 
-        // Horizontal lines
+        // Draw horizontal lines
         for (let y = 0; y < height; y += gridSize) {
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(width, y);
@@ -136,6 +188,8 @@ const graphModule = {
     },
 
     drawAxes() {
+        if (!this.ctx) return;
+
         const { width, height } = this.canvas;
         const centerX = width / 2 + this.offsetX * this.scale;
         const centerY = height / 2 + this.offsetY * this.scale;
@@ -154,12 +208,13 @@ const graphModule = {
         
         this.ctx.stroke();
 
-        // Draw scale markers
         this.drawScaleMarkers(centerX, centerY);
     },
 
     drawScaleMarkers(centerX, centerY) {
-        const step = 50 * this.scale; // pixels between markers
+        if (!this.ctx) return;
+
+        const step = 50 * this.scale;
         const markerSize = 5;
         
         this.ctx.font = '12px Arial';
@@ -168,22 +223,24 @@ const graphModule = {
 
         // X-axis markers
         for (let x = centerX + step; x < this.canvas.width; x += step) {
-            this.drawMarker(x, centerY, ((x - centerX) / step).toFixed(1));
+            this.drawMarker(x, centerY, ((x - centerX) / (50 * this.scale)).toFixed(1));
         }
         for (let x = centerX - step; x > 0; x -= step) {
-            this.drawMarker(x, centerY, ((x - centerX) / step).toFixed(1));
+            this.drawMarker(x, centerY, ((x - centerX) / (50 * this.scale)).toFixed(1));
         }
 
         // Y-axis markers
         for (let y = centerY + step; y < this.canvas.height; y += step) {
-            this.drawMarker(centerX, y, (-(y - centerY) / step).toFixed(1));
+            this.drawMarker(centerX, y, (-(y - centerY) / (50 * this.scale)).toFixed(1));
         }
         for (let y = centerY - step; y > 0; y -= step) {
-            this.drawMarker(centerX, y, (-(y - centerY) / step).toFixed(1));
+            this.drawMarker(centerX, y, (-(y - centerY) / (50 * this.scale)).toFixed(1));
         }
     },
 
     drawMarker(x, y, text) {
+        if (!this.ctx) return;
+
         const markerSize = 5;
         this.ctx.beginPath();
         this.ctx.moveTo(x - markerSize, y);
@@ -194,7 +251,9 @@ const graphModule = {
         this.ctx.fillText(text, x, y + 20);
     },
 
-    drawQuadraticFunction(a, b, c) {
+    drawQuadraticFunction() {
+        if (!this.ctx) return;
+
         const { width, height } = this.canvas;
         const centerX = width / 2 + this.offsetX * this.scale;
         const centerY = height / 2 + this.offsetY * this.scale;
@@ -202,6 +261,8 @@ const graphModule = {
         this.ctx.beginPath();
         this.ctx.strokeStyle = '#2F6EB1';
         this.ctx.lineWidth = 2;
+
+        const { a, b, c } = this.coefficients;
 
         for (let px = 0; px < width; px++) {
             const x = (px - centerX) / (50 * this.scale);
@@ -219,25 +280,31 @@ const graphModule = {
     },
 
     draw() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Get current coefficient values
-        const a = parseFloat(document.getElementById('coefficientAValue').value);
-        const b = parseFloat(document.getElementById('coefficientBValue').value);
-        const c = parseFloat(document.getElementById('coefficientCValue').value);
+        if (!this.ctx || !this.canvas) return;
 
+        console.log('Drawing graph with coefficients:', this.coefficients);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawGrid();
         this.drawAxes();
-        this.drawQuadraticFunction(a, b, c);
+        this.drawQuadraticFunction();
     },
 
-    updateEquation(a, b, c) {
-        const equation = document.getElementById('quadratic-equation');
-        equation.textContent = `y = ${a}x² + ${b}x + ${c}`;
+    setCoefficients(a, b, c) {
+        this.coefficients = { a, b, c };
+        this.updateEquation();
+        this.draw();
+    },
+
+    resetView() {
+        this.scale = 1;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.draw();
     }
 };
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing graph module...');
     graphModule.init();
 });

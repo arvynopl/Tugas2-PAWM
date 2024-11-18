@@ -1,61 +1,25 @@
-// File: js/script.js
+// File frontend/js/script.js
 
-document.addEventListener('DOMContentLoaded', () => {
-    // All your existing script.js code here
-  });
+const debugLog = (area, message, data) => {
+    console.group(`Debug: ${area}`);
+    console.log(message);
+    if (data) console.log('Data:', data);
+    console.groupEnd();
+};
 
 async function fetchAndDisplayUserName() {
     try {
-      const response = await fetch('/api/user/name', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-  
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch user name');
-      }
-  
-      const { name } = await response.json();
-      document.getElementById('user-name').textContent = name;
+      const userNameElement = document.getElementById('user-name');
+      if (!userNameElement) return;
+      
+      const name = await window.api.getUserName();
+      userNameElement.textContent = name;
     } catch (error) {
       console.error('Error fetching user name:', error);
-      document.getElementById('user-name').textContent = 'Guest';
     }
   }
-  
-  window.addEventListener('DOMContentLoaded', fetchAndDisplayUserName);
 
-  const searchInput = document.getElementById('searchInput');
-  const labCards = document.querySelectorAll('.lab-card');
-  
-  searchInput.addEventListener('input', () => {
-    const searchTerm = searchInput.value.toLowerCase();
-    labCards.forEach((card) => {
-      const title = card.querySelector('.lab-info h3').textContent.toLowerCase();
-      if (title.includes(searchTerm)) {
-        card.style.display = 'block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  });
-
-function redirectToLab(labCard) {
-    const labTitle = labCard.getAttribute('data-title');
-    if (labTitle === 'Persamaan Kuadrat') {
-        window.location.href = 'page-virtual-lab.html';
-    } else {
-        // Add logic for other lab cards
-        showAlert(labCard);
-    }
-}
-
-function showAlert(labCard) {
-    const labTitle = labCard.getAttribute('data-title');
-    alert(`Lab virtual "${labTitle}" masih dalam tahap pembangunan. Tolong periksa di lain waktu untuk pembaharuan di masa mendatang.`);
-}
+document.addEventListener('DOMContentLoaded', fetchAndDisplayUserName);
 
 const labModule = {
     // Initial state
@@ -74,8 +38,16 @@ const labModule = {
 
     // Initialize the module
     init() {
-        this.setupEventListeners();
-        this.loadProgress();
+        console.log('Initializing lab module...');
+        
+        // Load progress and set up other event listeners
+        this.loadProgress().then(() => {
+            this.setupEventListeners();
+            console.log('Lab module initialized successfully');
+        }).catch(error => {
+            console.error('Failed to initialize lab module:', error);
+            this.showMessage('Failed to initialize lab. Please refresh the page.', 'error');
+        });
     },
 
     // Set up event listeners for all controls
@@ -130,8 +102,11 @@ const labModule = {
 
         // Save progress button
         const saveButton = document.getElementById('saveProgress');
-        saveButton.addEventListener('click', () => this.saveProgress());
+        if (saveButton) {
+            saveButton.addEventListener('click', () => this.saveProgress());
+        }
 
+        // Set up the event listener for the quiz form submission
         const quizForm = document.getElementById('quiz-form');
         if (quizForm) {
             quizForm.addEventListener('submit', async (e) => {
@@ -139,24 +114,31 @@ const labModule = {
                 await this.handleQuizSubmit();
             });
         }
-        
-        const retryQuizButton = document.getElementById('retry-quiz');
-        if (retryQuizButton) {
-            retryQuizButton.addEventListener('click', () => {
-                quizModule.loadQuiz('quadratic');
-            });
-        }
     },
 
     // Update coefficient and redraw graph
     updateCoefficient(coeff, value) {
+        debugLog('Coefficients', `Updating ${coeff} to ${value}`, this.state.coefficients);
         this.state.coefficients[coeff] = parseFloat(value);
-        graphModule.updateEquation(
-            this.state.coefficients.a,
-            this.state.coefficients.b,
-            this.state.coefficients.c
-        );
-        graphModule.draw();
+        
+        // Add error checking
+        if (isNaN(this.state.coefficients[coeff])) {
+            console.error('Invalid coefficient value');
+            return;
+        }
+        
+        debugLog('Graph Update', 'Updating equation with new values', this.state.coefficients);
+        
+        try {
+            graphModule.updateEquation(
+                this.state.coefficients.a,
+                this.state.coefficients.b,
+                this.state.coefficients.c
+            );
+            graphModule.draw();
+        } catch (error) {
+            console.error('Error updating graph:', error);
+        }
     },
 
     // Clamp value between min and max
@@ -170,89 +152,93 @@ const labModule = {
     async loadProgress() {
         try {
             const labId = 'quadratic';
-            const response = await fetch(`http://localhost:5000/api/progress/${labId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to load progress');
-            }
-
-            const data = await response.json();
+            const progressData = await api.getProgress(labId);
             
-            // Update state with saved values
-            if (data.coefficients) {
-                this.state.coefficients = data.coefficients;
-                this.updateUIFromState();
+            // Update state with validated data from API
+            this.state = {
+                ...this.state,
+                coefficients: progressData.coefficients,
+                graphState: progressData.graph_state,
+                quiz_score: progressData.quiz_score,
+                is_completed: progressData.quiz_score >= 10 // Derive completion status from quiz score
+            };
+            
+            // Update UI and graph
+            this.updateUIFromState();
+            
+            if (window.graphModule) {
+                Object.assign(window.graphModule, progressData.graph_state);
+                window.graphModule.draw();
             }
-
-            if (data.graph_state) {
-                this.state.graphState = data.graph_state;
-                graphModule.scale = data.graph_state.scale;
-                graphModule.offsetX = data.graph_state.offsetX;
-                graphModule.offsetY = data.graph_state.offsetY;
-                graphModule.draw();
-            }
-
-            if (window.quizModule) {
-                if (data.quiz_answers && data.quiz_score !== null) {
-                    window.quizModule.showQuizResult({
-                        score: data.quiz_score,
-                        passed: data.quiz_score >= 10,
-                        answers: data.quiz_answers
-                    });
-                } else {
-                    window.quizModule.loadQuiz(labId);
-                }
-            }
-
+    
+            return true;
         } catch (error) {
             console.error('Error loading progress:', error);
-            this.showMessage('Gagal memuat progress sebelumnya', 'error');
+            this.showMessage(error.message || 'Failed to load progress', 'error');
+            return false;
         }
     },
 
     // Save progress to server
-    async saveProgress() {
+    async saveProgress(quizData = null) {
         try {
             this.showLoading(true);
+            console.log('Starting progress save...');
     
-            // Update graph state before saving
-            this.state.graphState = {
-                scale: graphModule.scale,
-                offsetX: graphModule.offsetX,
-                offsetY: graphModule.offsetY
+            const saveData = {
+                labId: 'quadratic',
+                coefficients: {
+                    a: parseFloat(document.getElementById('coefficientAValue').value) || 0,
+                    b: parseFloat(document.getElementById('coefficientBValue').value) || 0,
+                    c: parseFloat(document.getElementById('coefficientCValue').value) || 0
+                },
+                graph_state: {
+                    scale: graphModule.scale || 1,
+                    offsetX: graphModule.offsetX || 0,
+                    offsetY: graphModule.offsetY || 0
+                }
             };
     
-            // Get quiz data if available
-            const quizData = window.quizModule ? window.quizModule.getQuizData() : null;
+            // Add quiz data if present
+            if (quizData) {
+                saveData.quiz_answers = quizData.answers || null;
+                saveData.quiz_score = quizData.score || null;
+                saveData.completed_at = quizData.passed ? new Date().toISOString() : null;
+                saveData.is_completed = Boolean(quizData.passed);
+            }
+    
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
     
             const response = await fetch('http://localhost:5000/api/progress/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    labId: 'quadratic',
-                    coefficients: this.state.coefficients,
-                    graph_state: this.state.graphState,
-                    quiz_answers: quizData?.answers || null,
-                    quiz_score: quizData?.score || null,
-                    completed_at: quizData?.passed ? new Date().toISOString() : null
-                })
+                body: JSON.stringify(saveData)
             });
     
             if (!response.ok) {
-                throw new Error('Failed to save progress');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save progress');
             }
     
+            const result = await response.json();
+            console.log('Save successful:', result);
+    
+            // Update the state and UI with the new completion status
+            this.state.isCompleted = saveData.is_completed;
+            this.updateUIFromState();
+    
             this.showMessage('Progress berhasil disimpan', 'success');
+    
         } catch (error) {
-            console.error('Error saving progress:', error);
-            this.showMessage('Gagal menyimpan progress', 'error');
+            console.error('Save progress error:', error);
+            this.showMessage(error.message || 'Failed to save progress', 'error');
+            throw error;
         } finally {
             this.showLoading(false);
         }
@@ -260,38 +246,55 @@ const labModule = {
 
     // Update UI controls from state
     updateUIFromState() {
-        // Update sliders and inputs
-        document.getElementById('coefficientA').value = this.state.coefficients.a;
-        document.getElementById('coefficientAValue').value = this.state.coefficients.a;
-        
-        document.getElementById('coefficientB').value = this.state.coefficients.b;
-        document.getElementById('coefficientBValue').value = this.state.coefficients.b;
-        
-        document.getElementById('coefficientC').value = this.state.coefficients.c;
-        document.getElementById('coefficientCValue').value = this.state.coefficients.c;
+        try {
+            // Update coefficients
+            ['a', 'b', 'c'].forEach(coeff => {
+                const value = this.state.coefficients[coeff];
+                const slider = document.getElementById(`coefficient${coeff.toUpperCase()}`);
+                const input = document.getElementById(`coefficient${coeff.toUpperCase()}Value`);
+                
+                if (slider && input) {
+                    slider.value = value;
+                    input.value = value;
+                }
+            });
     
-        // Update equation display
-        graphModule.updateEquation(
-            this.state.coefficients.a,
-            this.state.coefficients.b,
-            this.state.coefficients.c
-        );
-    
-        // Update quiz UI if module is available
-        if (window.quizModule) {
-            const quizData = window.quizModule.getQuizData();
-            const quizContainer = document.getElementById('quiz-container');
-            const quizResult = document.getElementById('quiz-result');
+            // Update equation and graph
+            if (window.graphModule) {
+                window.graphModule.setCoefficients(
+                    this.state.coefficients.a,
+                    this.state.coefficients.b,
+                    this.state.coefficients.c
+                );
+                window.graphModule.draw();
+            }
+
+            // Update completion status display
+            const saveButton = document.getElementById('saveProgress');
+            const existingBadge = document.querySelector('.completion-badge');
             
-            if (quizContainer && quizResult) {
-                if (quizData.passed) {
-                    quizContainer.style.display = 'none';
-                    quizResult.style.display = 'block';
-                } else {
-                    quizContainer.style.display = 'block';
-                    quizResult.style.display = 'none';
+            if (this.state.is_completed) {
+                if (saveButton) {
+                    saveButton.classList.add('completed');
+                }
+                
+                if (!existingBadge) {
+                    const newBadge = document.createElement('div');
+                    newBadge.className = 'completion-badge';
+                    newBadge.textContent = '✓ Lulus';
+                    document.querySelector('.lab-title')?.appendChild(newBadge);
+                }
+            } else {
+                if (saveButton) {
+                    saveButton.classList.remove('completed');
+                }
+                if (existingBadge) {
+                    existingBadge.remove();
                 }
             }
+        } catch (error) {
+            console.error('Error updating UI from state:', error);
+            this.showMessage('Error updating display', 'error');
         }
     },
 
@@ -314,27 +317,35 @@ const labModule = {
             loadingOverlay.style.display = show ? 'flex' : 'none';
         }
     },
-
-    // Handle quiz submission
-    async handleQuizSubmit() {
-        const result = await quizModule.submitQuiz();
-        if (result.passed) {
-            await this.saveProgress();
-        }
-    }
 };
+
+const handleQuizSubmit = async () => {
+    const quizData = await quizModule.getQuizData();
+    if (quizData.passed) {
+        await labModule.saveProgress(quizData);
+    }
+}
+
+// Set up the event listener for the quiz form submission
+const quizForm = document.getElementById('quiz-form');
+if (quizForm) {
+    quizForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleQuizSubmit();
+    });
+}
 
 // Make labModule globally accessible
 window.labModule = labModule;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.labModule.init();
-    
-    // Initialize quiz if module is available
-    if (window.quizModule && typeof window.quizModule.loadQuiz === 'function') {
-        window.quizModule.loadQuiz('quadratic');
-    }
+    console.log('DOM loaded, initializing lab module...');
+    // Initialize the labModule
+    labModule.init();
+
+    // Initialize the quizModule
+    quizModule.loadQuiz('quadratic');
 });
 
 // Handle beforeunload event to warn about unsaved changes
@@ -352,3 +363,34 @@ window.addEventListener('beforeunload', (e) => {
         e.returnValue = '';
     }
 });
+
+// Search bar functionality
+const searchInput = document.getElementById('searchInput');
+const labCards = document.querySelectorAll('.lab-card');
+
+searchInput.addEventListener('input', () => {
+    const searchTerm = searchInput.value.toLowerCase();
+    labCards.forEach((card) => {
+        const title = card.querySelector('.lab-info h3').textContent.toLowerCase();
+        if (title.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+// Lab card redirection and alert messages
+function redirectToLab(labCard) {
+    const labTitle = labCard.getAttribute('data-title');
+    if (labTitle === 'Persamaan Kuadrat') {
+        window.location.href = 'page-virtual-lab.html';
+    } else {
+        showAlert(labCard);
+    }
+}
+
+function showAlert(labCard) {
+    const labTitle = labCard.getAttribute('data-title');
+    alert(`Lab virtual "${labTitle}" masih dalam tahap pembangunan.`);
+}
