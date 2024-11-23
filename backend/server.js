@@ -16,14 +16,18 @@ const authMiddleware = require('./middleware/auth');
 const app = express();
 
 // Update the CORS configuration section
-app.use(cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production'
+        ? ['https://virtual-lab-frontend.onrender.com']
+        : ['http://localhost:5500', 'http://127.0.0.1:5500'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
-    maxAge: 600 // Increase preflight cache to 10 minutes
-}));
+    maxAge: 600
+};
+
+app.use(cors(corsOptions));
 
 // Add a preflight handler for all routes
 app.options('*', cors());
