@@ -1,8 +1,8 @@
 // File frontend/js/api.js
 
 // API Configuration
-const API_URL = 'http://localhost:5000/api'; // Explicitly set backend URL
-const REQUEST_TIMEOUT = 10000;
+const API_URL = window.config.API_URL;
+const REQUEST_TIMEOUT = window.config.REQUEST_TIMEOUT;
 
 console.log('API URL:', API_URL);
 
