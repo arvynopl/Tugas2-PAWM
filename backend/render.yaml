@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: virtual-lab-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    nodeVersion: 18.x
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: virtual-lab-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: postgresql
+    name: virtual-lab-db
+    ipAllowList: []
+    plan: free
