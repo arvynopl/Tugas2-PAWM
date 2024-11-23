@@ -514,6 +514,7 @@ footer a:hover {
 /* Add this for better spacing */
 .labs-section {
     padding: 0 var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
 }
 
 /* Add this for container width control */
@@ -742,6 +743,7 @@ footer a:hover {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
 }
 
 .quiz-header {
