@@ -3,7 +3,7 @@
 const env = require('../config/env');
 const router = require('express').Router();
 const pool = require('../config/db');
-const bcrypt = require('bcrypt-promise');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
@@ -39,8 +39,7 @@ router.post('/register', [
             user: result.rows[0]
         });
     } catch (error) {
-        // Improved error handling with specific messages
-        if (error.code === '23505') { // unique violation
+        if (error.code === '23505') {
             if (error.constraint === 'users_nim_key') {
                 return res.status(400).json({ 
                     error: 'NIM sudah terdaftar. Silakan gunakan NIM lain atau login ke akun Anda.',
